@@ -1,0 +1,10 @@
+services:
+  bot:
+    build: .
+    env_file: .env
+    volumes:
+      # The bot's working directory (your projects).
+      - ${WORKING_DIR:-.}:${WORKING_DIR:-.}
+      # The agent CLI binary, credentials and sessions (kimi example).
+      - ${HOME}/.kimi-code:/root/.kimi-code
+    restart: unless-stopped
