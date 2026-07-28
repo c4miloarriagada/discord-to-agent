@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     prompt_timeout: int = 300
     rate_limit_seconds: int = 10
     log_level: str = "INFO"
+    # PR comment notifications (disabled when token or repos are empty).
+    github_token: str = ""
+    github_repos: Annotated[list[str], NoDecode] = []
+    github_username: str = ""
+    github_poll_interval: int = 60
+    notify_channel_id: int | None = None
+    mcp_config_path: str = "~/.kimi-code/mcp.json"
 
     @field_validator("allowed_channel_ids", "allowed_user_ids", mode="before")
     @classmethod
@@ -36,6 +43,14 @@ class Settings(BaseSettings):
         """Parse comma-separated id lists from env vars."""
         if isinstance(value, str):
             return [int(v.strip()) for v in value.split(",") if v.strip()]
+        return value
+
+    @field_validator("github_repos", mode="before")
+    @classmethod
+    def _split_repos(cls, value: object) -> object:
+        """Parse a comma-separated owner/repo list from env vars."""
+        if isinstance(value, str):
+            return [v.strip() for v in value.split(",") if v.strip()]
         return value
 
 

@@ -57,3 +57,16 @@ class Execution:
     def elapsed_seconds(self) -> float:
         """Seconds since the execution started."""
         return time.time() - self.started_at
+
+
+@dataclass(frozen=True)
+class PrComment:
+    """A comment on a pull request."""
+
+    repo: str
+    pr_number: int
+    pr_title: str
+    author: str
+    body: str
+    url: str
+    kind: str  # "comment" | "review_comment" | "review"

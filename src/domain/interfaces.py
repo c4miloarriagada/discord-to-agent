@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 
-from src.domain.models import Execution, Prompt, Response
+from src.domain.models import Execution, PrComment, Prompt, Response
 
 
 class AgentRunner(ABC):
@@ -77,3 +78,11 @@ class RateLimiter(ABC):
     @abstractmethod
     def check(self, user_id: int) -> None:
         """Raise RateLimitError if the user must wait."""
+
+
+class PrCommentSource(ABC):
+    """Fetches new pull request comments from a code hosting platform."""
+
+    @abstractmethod
+    async def fetch_new_comments(self, since: datetime) -> list[PrComment]:
+        """Return comments created at or after `since`."""

@@ -123,6 +123,27 @@ Note: the mounted CLI binary runs inside a Linux container, so it must be Linux-
 - `/status` — show the active run and context-window usage %
 - `/cancel` — kill the active run
 
+## PR comment notifications (optional)
+
+The bot can poll GitHub and notify you in Discord when someone comments on open PRs in your repos, so you can iterate on reviews with the agent from your phone.
+
+Configuration (`.env`):
+
+| Variable | Description | Default |
+|---|---|---|
+| `GITHUB_TOKEN` | GitHub PAT with PR read access. If empty, the bot falls back to the token in `~/.kimi-code/mcp.json` (the GitHub MCP server, if configured). | `""` |
+| `GITHUB_REPOS` | Comma-separated `owner/repo` list to watch. Feature is disabled when empty. | `[]` |
+| `GITHUB_USERNAME` | Your GitHub login; your own comments are not notified. | `""` |
+| `GITHUB_POLL_INTERVAL` | Seconds between polls. | `60` |
+| `NOTIFY_CHANNEL_ID` | Channel for notifications. Defaults to the first `ALLOWED_CHANNEL_IDS` entry. | unset |
+
+How it works:
+
+- Every `GITHUB_POLL_INTERVAL` seconds the bot lists open PRs in each repo and fetches issue comments, review comments, and reviews newer than the last poll.
+- The first poll after startup sets a silent baseline (no spam with old comments).
+- Each new comment posts an embed (repo, PR, author, body, link) mentioning the first `ALLOWED_USER_IDS` entry, so your phone pings.
+- **Reply to the notification** and your reply becomes a prompt in your session — the agent (which has its own GitHub access via the kimi MCP config) can then fix the PR.
+
 ## Adding a new agent adapter
 
 1. Create `src/infrastructure/agents/claude.py` with a `ClaudeAdapter(AgentAdapter)` implementing `name` and `build_command` (`parse_output` and `get_context_percent` hooks are optional).

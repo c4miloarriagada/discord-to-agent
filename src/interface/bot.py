@@ -7,13 +7,18 @@ import sys
 
 import discord
 import structlog
-from discord.ext import commands
+from discord.ext import commands, tasks
 
+from src.application.pr_watch_service import PrWatchService
 from src.application.prompt_history import PromptHistory
 from src.domain.exceptions import ConfigError
 from src.infrastructure.agents.registry import create_agent_runner
 from src.infrastructure.config import load_settings
 from src.infrastructure.execution_tracker import InMemoryExecutionTracker
+from src.infrastructure.github_client import (
+    GitHubPrCommentSource,
+    token_from_mcp_config,
+)
 from src.infrastructure.rate_limiter import InMemoryRateLimiter
 from src.infrastructure.session_store import InMemorySessionStore
 from src.interface.commands import (
@@ -23,6 +28,7 @@ from src.interface.commands import (
     run_prompt_flow,
     user_is_allowed,
 )
+from src.interface.pr_watcher import create_pr_watcher, resolve_notify_channel_id
 
 logger = structlog.get_logger(__name__)
 
@@ -36,6 +42,9 @@ def create_bot(deps: BotDeps) -> commands.Bot:
         async def setup_hook(self) -> None:
             await self.add_cog(AgentCog(self, deps))
             await self.tree.sync()
+            watcher = _build_pr_watcher(self, deps)
+            if watcher is not None:
+                watcher.start()
 
     bot = AgentBot(command_prefix="!", intents=intents)
 
@@ -66,6 +75,29 @@ def create_bot(deps: BotDeps) -> commands.Bot:
             await run_prompt_flow(text, message.author.id, message.channel, deps)
 
     return bot
+
+
+def _build_pr_watcher(bot: commands.Bot, deps: BotDeps) -> tasks.Loop | None:
+    """Build the PR watcher loop, or None when it is not configured."""
+    settings = deps.settings
+    token = settings.github_token or token_from_mcp_config(settings.mcp_config_path)
+    if not token or not settings.github_repos:
+        logger.info("pr_watch_disabled", reason="missing token or repos")
+        return None
+    if resolve_notify_channel_id(settings) is None:
+        logger.warning("pr_watch_disabled", reason="no notify channel configured")
+        return None
+    source = GitHubPrCommentSource(
+        token=token,
+        repos=settings.github_repos,
+        ignored_authors=(settings.github_username,) if settings.github_username else (),
+    )
+    logger.info(
+        "pr_watch_enabled",
+        repos=settings.github_repos,
+        interval=settings.github_poll_interval,
+    )
+    return create_pr_watcher(bot, settings, PrWatchService(source))
 
 
 def _extract_prompt_text(message: discord.Message, bot: commands.Bot) -> str | None:

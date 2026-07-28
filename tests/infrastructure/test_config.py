@@ -31,3 +31,13 @@ def test_load_settings_defaults(monkeypatch, tmp_path):
     assert settings.prompt_timeout == 300
     assert settings.rate_limit_seconds == 10
     assert settings.allowed_channel_ids == []
+
+
+def test_load_settings_parses_github_repos(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DISCORD_BOT_TOKEN", "x")
+    monkeypatch.setenv("GITHUB_REPOS", "owner/repo, other/repo2")
+    settings = load_settings()
+    assert settings.github_repos == ["owner/repo", "other/repo2"]
+    assert settings.github_token == ""
+    assert settings.github_poll_interval == 60
