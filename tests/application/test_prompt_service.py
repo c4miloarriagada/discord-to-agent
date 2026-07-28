@@ -109,3 +109,25 @@ def test_context_percent(runner, tracker, rate_limiter, session_store, history, 
     assert service.context_percent(42) is None
     session_store.set(42, "sess")
     assert service.context_percent(42) == 12.5
+
+
+async def test_execute_with_context_validates_only_text(
+    runner, tracker, rate_limiter, session_store, history, notifier
+):
+    service = make_service(runner, tracker, rate_limiter, session_store, history, notifier)
+    # Context may contain backticks/semicolons (PR comments do); text may not.
+    await service.execute(
+        "apply this", user_id=42, context="review: change `foo();` please"
+    )
+    prompt, _ = runner.calls[0]
+    assert "Context:\nreview: change `foo();` please" in prompt.text
+    assert "Instruction: apply this" in prompt.text
+
+
+async def test_execute_with_context_still_rejects_dangerous_text(
+    runner, tracker, rate_limiter, session_store, history, notifier
+):
+    service = make_service(runner, tracker, rate_limiter, session_store, history, notifier)
+    with pytest.raises(PromptValidationError):
+        await service.execute("bad; text", user_id=42, context="safe context")
+    assert runner.calls == []

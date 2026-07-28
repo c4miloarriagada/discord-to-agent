@@ -43,6 +43,7 @@ async def run_prompt_flow(
     user_id: int,
     target: discord.Interaction | discord.abc.Messageable,
     deps: BotDeps,
+    context: str | None = None,
 ) -> None:
     """Shared entry point for /prompt and message-based prompts."""
     notifier = DiscordNotifier(target, author_id=user_id)
@@ -57,7 +58,7 @@ async def run_prompt_flow(
     approval = ApprovalService(service, deps.history)
     notifier.attach_view(ApprovalView(approval, author_id=user_id))
     try:
-        await service.execute(text, user_id)
+        await service.execute(text, user_id, context=context)
     except BotError as exc:
         await notifier.send_error(str(exc))
     except Exception:

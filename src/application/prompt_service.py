@@ -42,11 +42,22 @@ class PromptService:
         self._history = history
         self._notifier = notifier
 
-    async def execute(self, text: str, user_id: int, auto_approve: bool = False) -> Response:
-        """Validate and run a prompt, then notify and store the result."""
+    async def execute(
+        self,
+        text: str,
+        user_id: int,
+        auto_approve: bool = False,
+        context: str | None = None,
+    ) -> Response:
+        """Validate and run a prompt, then notify and store the result.
+
+        Only `text` is validated; `context` is trusted system-generated
+        content (e.g. a replied notification) prepended to the prompt.
+        """
         self._validate(text)
         self._rate_limiter.check(user_id)
-        prompt = Prompt(text=text, user_id=user_id, auto_approve=auto_approve)
+        full_text = f"Context:\n{context}\n\nInstruction: {text}" if context else text
+        prompt = Prompt(text=full_text, user_id=user_id, auto_approve=auto_approve)
         self._tracker.try_start(prompt)
         try:
             session_id = self._session_store.get(user_id)

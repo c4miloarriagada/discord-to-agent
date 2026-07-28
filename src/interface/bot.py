@@ -71,10 +71,36 @@ def create_bot(deps: BotDeps) -> commands.Bot:
                 channel_id=message.channel.id,
             )
             return
+        context = _reply_context(message, bot)
         async with message.channel.typing():
-            await run_prompt_flow(text, message.author.id, message.channel, deps)
+            await run_prompt_flow(
+                text, message.author.id, message.channel, deps, context=context
+            )
 
     return bot
+
+
+def _reply_context(message: discord.Message, bot: commands.Bot) -> str | None:
+    """Extract context from a referenced bot message (e.g. a PR notification)."""
+    reference = message.reference
+    if not reference or not isinstance(reference.resolved, discord.Message):
+        return None
+    resolved = reference.resolved
+    if resolved.author != bot.user:
+        return None
+    parts: list[str] = []
+    if resolved.content:
+        parts.append(resolved.content)
+    for embed in resolved.embeds:
+        if embed.title:
+            parts.append(embed.title)
+        if embed.url:
+            parts.append(embed.url)
+        if embed.description:
+            parts.append(embed.description)
+        parts.extend(f"{f.name}: {f.value}" for f in embed.fields)
+    context = "\n".join(p for p in parts if p).strip()
+    return context or None
 
 
 def _build_pr_watcher(bot: commands.Bot, deps: BotDeps) -> tasks.Loop | None:
