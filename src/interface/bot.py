@@ -113,10 +113,12 @@ def _build_pr_watcher(bot: commands.Bot, deps: BotDeps) -> tasks.Loop | None:
     if resolve_notify_channel_id(settings) is None:
         logger.warning("pr_watch_disabled", reason="no notify channel configured")
         return None
+    own_prs_only = bool(settings.github_username) and not settings.github_watch_all_prs
     source = GitHubPrCommentSource(
         token=token,
         repos=settings.github_repos,
         ignored_authors=(settings.github_username,) if settings.github_username else (),
+        only_authored_by=(settings.github_username,) if own_prs_only else (),
     )
     logger.info(
         "pr_watch_enabled",

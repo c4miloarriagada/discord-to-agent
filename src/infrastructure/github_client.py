@@ -40,11 +40,13 @@ class GitHubPrCommentSource(PrCommentSource):
         token: str,
         repos: list[str],
         ignored_authors: tuple[str, ...] = (),
+        only_authored_by: tuple[str, ...] = (),
         fetcher: Fetcher | None = None,
     ) -> None:
         self._token = token
         self._repos = repos
         self._ignored = set(ignored_authors)
+        self._only_authored_by = set(only_authored_by)
         self._injected_fetcher = fetcher
 
     async def fetch_new_comments(self, since: datetime) -> list[PrComment]:
@@ -72,8 +74,17 @@ class GitHubPrCommentSource(PrCommentSource):
         for repo in self._repos:
             prs = await fetch(f"/repos/{repo}/pulls", {"state": "open", "per_page": "50"})
             for pr in prs:
+                if not self._pr_is_watched(pr):
+                    continue
                 results.extend(await self._fetch_pr_comments(fetch, repo, pr, since))
         return [c for c in results if c.author not in self._ignored]
+
+    def _pr_is_watched(self, pr: dict) -> bool:
+        """When only_authored_by is set, watch only those authors' PRs."""
+        if not self._only_authored_by:
+            return True
+        author = (pr.get("user") or {}).get("login")
+        return author in self._only_authored_by
 
     async def _fetch_pr_comments(
         self, fetch: Fetcher, repo: str, pr: dict, since: datetime

@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     github_poll_interval: int = 60
     notify_channel_id: int | None = None
     mcp_config_path: str = "~/.kimi-code/mcp.json"
+    # When False and github_username is set, only that author's PRs are watched.
+    github_watch_all_prs: bool = False
 
     @field_validator("allowed_channel_ids", "allowed_user_ids", mode="before")
     @classmethod

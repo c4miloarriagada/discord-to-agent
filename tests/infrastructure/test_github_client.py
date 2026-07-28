@@ -91,3 +91,43 @@ async def test_ignored_authors_are_skipped():
         ),
     )
     assert await source.fetch_new_comments(SINCE) == []
+
+
+async def test_only_own_prs_are_watched():
+    source = GitHubPrCommentSource(
+        token="x",
+        repos=["o/r"],
+        ignored_authors=("me",),
+        only_authored_by=("me",),
+        fetcher=make_fetcher(
+            {
+                "/repos/o/r/pulls": [
+                    {"number": 7, "title": "Mine", "user": {"login": "me"}},
+                    {"number": 8, "title": "Theirs", "user": {"login": "other"}},
+                ],
+                "/repos/o/r/issues/7/comments": comment_payload("reviewer"),
+                "/repos/o/r/pulls/7/comments": [],
+                "/repos/o/r/pulls/7/reviews": [],
+            }
+        ),
+    )
+    comments = await source.fetch_new_comments(SINCE)
+    assert len(comments) == 1
+    assert comments[0].pr_number == 7
+
+
+async def test_all_prs_watched_without_author_filter():
+    fetcher_calls = []
+
+    async def fetch(path: str, params: dict):
+        fetcher_calls.append(path)
+        if path.endswith("/pulls"):
+            return [
+                {"number": 7, "title": "Mine", "user": {"login": "me"}},
+                {"number": 8, "title": "Theirs", "user": {"login": "other"}},
+            ]
+        return []
+
+    source = GitHubPrCommentSource(token="x", repos=["o/r"], fetcher=fetch)
+    await source.fetch_new_comments(SINCE)
+    assert any("issues/8/comments" in p for p in fetcher_calls)
