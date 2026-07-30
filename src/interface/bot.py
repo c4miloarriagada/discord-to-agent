@@ -20,7 +20,7 @@ from src.infrastructure.github_client import (
     token_from_mcp_config,
 )
 from src.infrastructure.rate_limiter import InMemoryRateLimiter
-from src.infrastructure.session_store import InMemorySessionStore
+from src.infrastructure.session_store import JsonSessionStore
 from src.interface.commands import (
     AgentCog,
     BotDeps,
@@ -184,7 +184,7 @@ def main() -> None:
         runner=runner,
         tracker=InMemoryExecutionTracker(),
         rate_limiter=InMemoryRateLimiter(settings.rate_limit_seconds),
-        session_store=InMemorySessionStore(),
+        session_store=JsonSessionStore(settings.session_store_path),
         history=PromptHistory(),
     )
     bot = create_bot(deps)

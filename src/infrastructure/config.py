@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     prompt_timeout: int = 300
     rate_limit_seconds: int = 10
     log_level: str = "INFO"
+    # Where per-user agent sessions are persisted (must be a mounted path in
+    # Docker so conversations survive container restarts).
+    session_store_path: str = "~/.kimi-code/bot_sessions.json"
     # PR comment notifications (disabled when token or repos are empty).
     github_token: str = ""
     github_personal_access_token: str = ""  # used by the MCP server in Docker
