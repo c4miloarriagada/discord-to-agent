@@ -115,7 +115,19 @@ The compose file mounts two volumes:
 For full agent capabilities (clone, commit, push, GitHub MCP), the image already includes `git`, `gh`, and the `github-mcp-server` binary, and compose additionally mounts:
 
 - `${HOME}/.gitconfig`, `${HOME}/.config/gh`, `${HOME}/.ssh` (read-only) — git identity and GitHub auth.
-- `./docker/mcp.json` → `/root/.kimi-code/mcp.json` — a container-specific MCP config that runs `github-mcp-server` as a local process (no docker socket needed). It reads `GITHUB_PERSONAL_ACCESS_TOKEN` from the container environment, so set it in `.env`.
+- `./docker/mcp.json` → `/root/<AGENT_HOME_DIR>/mcp.json` — a container-specific MCP config that runs `github-mcp-server` as a local process (no docker socket needed). It reads `GITHUB_PERSONAL_ACCESS_TOKEN` from the container environment, so set it in `.env`.
+- `./docker/agents` → `/opt/agent-hooks` — per-agent startup hooks.
+
+### Per-agent entrypoint hooks
+
+The container entrypoint (`docker/entrypoint.sh`) is generic: it sources `/opt/agent-hooks/<AGENT_TYPE>.sh` and then starts the bot. A hook sets up whatever that agent CLI needs (PATH, env vars, config checks). The directory is a bind mount, so adding a new agent's hook needs **no image rebuild** — just `docker compose restart`.
+
+To run a different agent in Docker:
+
+1. Write the adapter (`src/infrastructure/agents/<agent>.py`) and register it (see "Adding a new agent adapter").
+2. Drop a hook in `docker/agents/<agent>.sh` (see `kimi.sh` and the `claude.sh` example).
+3. Set `AGENT_TYPE=<agent>` and `AGENT_HOME_DIR=.<agent-config-home>` in `.env`.
+4. `docker compose up -d`.
 
 Note: the mounted CLI binary runs inside a Linux container, so it must be Linux-compatible (on macOS hosts, install a Linux build of the CLI into the mounted dir or install the CLI inside the image instead).
 

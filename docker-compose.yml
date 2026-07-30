@@ -17,4 +17,6 @@ services:
       # GITHUB_PERSONAL_ACCESS_TOKEN from the container environment (env_file).
       # The target path follows the agent's config format (kimi: mcp.json).
       - ./docker/mcp.json:/root/${AGENT_HOME_DIR:-.kimi-code}/mcp.json:ro
+      # Per-agent entrypoint hooks, sourced by docker/entrypoint.sh.
+      - ./docker/agents:/opt/agent-hooks:ro
     restart: unless-stopped
