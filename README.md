@@ -84,7 +84,7 @@ cp .env.example .env
 | `KIMI_CONTEXT_WINDOW` | `1048576` | Context window size in tokens (for the % calculation) |
 | `PROMPT_TIMEOUT` | `300` | Seconds before a run is killed |
 | `RATE_LIMIT_SECONDS` | `10` | Per-user cooldown between prompts |
-| `SESSION_STORE_PATH` | `~/.kimi-code/bot_sessions.json` | JSON file where per-user agent sessions persist, so conversations keep agent context across bot/container restarts |
+| `SESSION_STORE_PATH` | `data/bot_sessions.json` | JSON file where per-user agent sessions persist (agent-agnostic), so conversations keep context across restarts. In Docker, the named volume `bot-data` holds it |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
 Notes:
