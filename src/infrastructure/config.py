@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     # PR comment notifications (disabled when token or repos are empty).
     github_token: str = ""
+    github_personal_access_token: str = ""  # used by the MCP server in Docker
     github_repos: Annotated[list[str], NoDecode] = []
     github_username: str = ""
     github_poll_interval: int = 60

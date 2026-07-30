@@ -106,7 +106,11 @@ def _reply_context(message: discord.Message, bot: commands.Bot) -> str | None:
 def _build_pr_watcher(bot: commands.Bot, deps: BotDeps) -> tasks.Loop | None:
     """Build the PR watcher loop, or None when it is not configured."""
     settings = deps.settings
-    token = settings.github_token or token_from_mcp_config(settings.mcp_config_path)
+    token = (
+        settings.github_token
+        or settings.github_personal_access_token
+        or token_from_mcp_config(settings.mcp_config_path)
+    )
     if not token or not settings.github_repos:
         logger.info("pr_watch_disabled", reason="missing token or repos")
         return None
