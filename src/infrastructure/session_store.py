@@ -62,6 +62,7 @@ class JsonSessionStore(SessionStore):
         return data if isinstance(data, dict) else {}
 
     def _save(self, data: dict[str, str]) -> None:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self._path.with_suffix(self._path.suffix + ".tmp")
         tmp.write_text(json.dumps(data), encoding="utf-8")
         os.replace(tmp, self._path)

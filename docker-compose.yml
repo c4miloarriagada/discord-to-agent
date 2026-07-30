@@ -19,4 +19,10 @@ services:
       - ./docker/mcp.json:/root/${AGENT_HOME_DIR:-.kimi-code}/mcp.json:ro
       # Per-agent entrypoint hooks, sourced by docker/entrypoint.sh.
       - ./docker/agents:/opt/agent-hooks:ro
+      # Bot-owned persistent state (session store). Named volume: survives
+      # rebuilds, no host-path coupling, agent-agnostic.
+      - bot-data:/app/data
     restart: unless-stopped
+
+volumes:
+  bot-data:

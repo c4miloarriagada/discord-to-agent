@@ -83,3 +83,11 @@ def test_json_session_store_tolerates_corrupted_file(tmp_path):
     assert store.get(1) is None
     store.set(1, "sess-1")  # recovers and writes valid JSON
     assert JsonSessionStore(str(path)).get(1) == "sess-1"
+
+
+def test_json_session_store_creates_nested_dirs(tmp_path):
+    from src.infrastructure.session_store import JsonSessionStore
+
+    path = str(tmp_path / "nested" / "deep" / "sessions.json")
+    JsonSessionStore(path).set(7, "sess-x")
+    assert JsonSessionStore(path).get(7) == "sess-x"
