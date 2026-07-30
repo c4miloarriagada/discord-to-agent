@@ -17,7 +17,9 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /install /usr/local
 COPY src/ ./src/
-# The agent CLI is provided by mounting the host's agent home dir (see docker-compose.yml).
-ENV PATH="/root/.kimi-code/bin:${PATH}"
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+# The agent CLI is provided by mounting the host's agent home dir
+# (AGENT_HOME_DIR, e.g. .kimi-code) — see docker-compose.yml and entrypoint.sh.
 ENV PYTHONUNBUFFERED=1
-CMD ["python", "-m", "src.interface.bot"]
+CMD ["entrypoint.sh"]

@@ -5,8 +5,9 @@ services:
     volumes:
       # The bot's working directory (your projects).
       - ${WORKING_DIR:-.}:${WORKING_DIR:-.}
-      # The agent CLI binary, credentials and sessions (kimi example).
-      - ${HOME}/.kimi-code:/root/.kimi-code
+      # The agent's home dir: CLI binary, credentials and sessions.
+      # AGENT_HOME_DIR selects the agent (e.g. .kimi-code, .claude).
+      - ${HOME}/${AGENT_HOME_DIR:-.kimi-code}:/root/${AGENT_HOME_DIR:-.kimi-code}
       # Git/gh identity and auth so the agent can clone, commit and push.
       - ${HOME}/.gitconfig:/root/.gitconfig:ro
       - ${HOME}/.config/gh:/root/.config/gh:ro
@@ -14,5 +15,6 @@ services:
       # Container-specific MCP config: the github-mcp-server binary runs as a
       # local process inside the container (no docker socket needed). It reads
       # GITHUB_PERSONAL_ACCESS_TOKEN from the container environment (env_file).
-      - ./docker/mcp.json:/root/.kimi-code/mcp.json:ro
+      # The target path follows the agent's config format (kimi: mcp.json).
+      - ./docker/mcp.json:/root/${AGENT_HOME_DIR:-.kimi-code}/mcp.json:ro
     restart: unless-stopped
