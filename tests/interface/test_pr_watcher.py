@@ -37,6 +37,30 @@ def test_pr_comment_embed_empty_body():
     assert embed.description == "(no body)"
 
 
+def test_approved_review_embed():
+    embed = build_pr_comment_embed(make_comment(kind="review", body="APPROVED"))
+    assert "✅ PR #7 approved" in embed.title
+    assert embed.color == discord.Color(0x2ECC71)
+    assert embed.url == "https://gh/1"
+    fields = {field.name: field.value for field in embed.fields}
+    assert fields["Reviewer"] == "ana"
+    assert fields["PR"] == "Fix bug"
+
+
+def test_changes_requested_review_embed():
+    embed = build_pr_comment_embed(
+        make_comment(kind="review", body="CHANGES_REQUESTED")
+    )
+    assert "🔴 Changes requested on PR #7" in embed.title
+    assert embed.color == discord.Color(0xE74C3C)
+
+
+def test_commented_review_keeps_generic_embed():
+    embed = build_pr_comment_embed(make_comment(kind="review", body="COMMENTED"))
+    assert "💬 New review on PR #7" in embed.title
+    assert embed.color == discord.Color(0x3498DB)
+
+
 def settings(**overrides) -> Settings:
     base = {"discord_bot_token": "x", "allowed_user_ids": [], "allowed_channel_ids": []}
     return Settings(**(base | overrides))

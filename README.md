@@ -139,6 +139,8 @@ Note: the mounted CLI binary runs inside a Linux container, so it must be Linux-
 - `/clear` — clear context; the next prompt starts a fresh session
 - `/status` — show the active run and context-window usage %
 - `/cancel` — kill the active run
+- Reply to any bot message (including PR notifications) and its content is injected as context for your next prompt
+- With the PR watcher enabled (see below), new PR activity posts a notification embed: green **PR approved** for `APPROVED` reviews, red **Changes requested** for `CHANGES_REQUESTED` reviews, and the generic blue embed for everything else
 
 ## PR comment notifications (optional)
 
@@ -159,6 +161,7 @@ How it works:
 - Every `GITHUB_POLL_INTERVAL` seconds the bot lists open PRs in each repo and fetches issue comments, review comments, and reviews newer than the last poll.
 - The first poll after startup sets a silent baseline (no spam with old comments).
 - Each new comment posts an embed (repo, PR, author, body, link) mentioning the first `ALLOWED_USER_IDS` entry, so your phone pings.
+- Reviews get distinctive embeds: a green **✅ PR approved** embed for `APPROVED` reviews and a red **🔴 Changes requested** embed for `CHANGES_REQUESTED` reviews (both with Repo / Reviewer / PR fields). All other activity — issue comments, review comments, reviews with other states or with a text body — keeps the generic blue embed.
 - **Reply to the notification** and your reply becomes a prompt in your session — the agent (which has its own GitHub access via the kimi MCP config) can then fix the PR.
 
 ## Adding a new agent adapter

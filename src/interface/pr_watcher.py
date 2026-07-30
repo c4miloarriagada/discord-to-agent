@@ -13,8 +13,45 @@ from src.infrastructure.config import Settings
 logger = structlog.get_logger(__name__)
 
 
+_REVIEW_STATE_FOOTER = "Reply to this message to merge or work on it with the agent"
+
+
+def _build_review_state_embed(
+    comment: PrComment, title: str, color: int, review_text: str = ""
+) -> discord.Embed:
+    """Build the embed for an actionable review state (approved / changes requested).
+
+    ``review_text`` is the optional free text of the review, shown as the
+    description when present. With the current normalization a review carrying
+    text keeps that text in ``comment.body`` and never matches the exact state
+    strings, so this slot exists for future-proofing.
+    """
+    embed = discord.Embed(
+        title=title,
+        description=review_text[:500] or None,
+        url=comment.url,
+        color=color,
+    )
+    embed.add_field(name="Repo", value=comment.repo, inline=True)
+    embed.add_field(name="Reviewer", value=comment.author, inline=True)
+    embed.add_field(name="PR", value=comment.pr_title[:100], inline=False)
+    embed.set_footer(text=_REVIEW_STATE_FOOTER)
+    return embed
+
+
 def build_pr_comment_embed(comment: PrComment) -> discord.Embed:
     """Build the embed for a new PR comment notification."""
+    if comment.kind == "review":
+        if comment.body == "APPROVED":
+            return _build_review_state_embed(
+                comment, f"✅ PR #{comment.pr_number} approved", 0x2ECC71
+            )
+        if comment.body == "CHANGES_REQUESTED":
+            return _build_review_state_embed(
+                comment,
+                f"🔴 Changes requested on PR #{comment.pr_number}",
+                0xE74C3C,
+            )
     embed = discord.Embed(
         title=f"💬 New {comment.kind.replace('_', ' ')} on PR #{comment.pr_number}",
         description=comment.body[:500] or "(no body)",
