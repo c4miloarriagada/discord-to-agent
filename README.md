@@ -112,6 +112,11 @@ The compose file mounts two volumes:
 - `${WORKING_DIR}` — the bot's working directory, i.e. your projects. Mounted at the same path inside the container so agent session paths stay consistent.
 - `${HOME}/.kimi-code` → `/root/.kimi-code` — the agent home dir, which carries the CLI binary (`bin/`), credentials, and sessions. The Dockerfile puts `/root/.kimi-code/bin` on `PATH`.
 
+For full agent capabilities (clone, commit, push, GitHub MCP), the image already includes `git`, `gh`, and the `github-mcp-server` binary, and compose additionally mounts:
+
+- `${HOME}/.gitconfig`, `${HOME}/.config/gh`, `${HOME}/.ssh` (read-only) — git identity and GitHub auth.
+- `./docker/mcp.json` → `/root/.kimi-code/mcp.json` — a container-specific MCP config that runs `github-mcp-server` as a local process (no docker socket needed). It reads `GITHUB_PERSONAL_ACCESS_TOKEN` from the container environment, so set it in `.env`.
+
 Note: the mounted CLI binary runs inside a Linux container, so it must be Linux-compatible (on macOS hosts, install a Linux build of the CLI into the mounted dir or install the CLI inside the image instead).
 
 ## Usage

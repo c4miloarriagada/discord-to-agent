@@ -7,4 +7,12 @@ services:
       - ${WORKING_DIR:-.}:${WORKING_DIR:-.}
       # The agent CLI binary, credentials and sessions (kimi example).
       - ${HOME}/.kimi-code:/root/.kimi-code
+      # Git/gh identity and auth so the agent can clone, commit and push.
+      - ${HOME}/.gitconfig:/root/.gitconfig:ro
+      - ${HOME}/.config/gh:/root/.config/gh:ro
+      - ${HOME}/.ssh:/root/.ssh:ro
+      # Container-specific MCP config: the github-mcp-server binary runs as a
+      # local process inside the container (no docker socket needed). It reads
+      # GITHUB_PERSONAL_ACCESS_TOKEN from the container environment (env_file).
+      - ./docker/mcp.json:/root/.kimi-code/mcp.json:ro
     restart: unless-stopped
